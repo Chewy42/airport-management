@@ -27,6 +27,7 @@
     "start": "react-scripts start",
     "start:backend": "cd backend && npm start",
     "start:both": "concurrently \"npm start\" \"npm run start:backend\"",
+    "setup": "npm install && cd backend && npm install",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

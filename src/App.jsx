@@ -7,10 +7,8 @@ import {
 } from 'react-router-dom';
 
 import Homepage from './Components/Homepage';
-import SignInP1 from './Components/SignInP1';
-import SignUpP1 from './Components/SignUpP1';
-import SignInP2 from './Components/SignInP2';
-import SignUpP2 from './Components/SignUpP2';
+import SignIn from './Components/SignIn';
+import SignUp from './Components/SignUp';
 
 function App() {
 
@@ -30,10 +28,8 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Homepage />} />
-        <Route path="/signin-p1" element={<SignInP1 />} />
-        <Route path="/signup-p1" element={<SignUpP1 />} />
-        <Route path="/signin-p2" element={<SignInP2 />} />
-        <Route path="/signup-p2" element={<SignUpP2 />} />
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/signup" element={<SignUp />} />
       </Routes>
     </Router>
       </>

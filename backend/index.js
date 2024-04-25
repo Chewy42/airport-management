@@ -1,9 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const sqlite3 = require("sqlite3").verbose();
 const passport = require('passport');
 const session = require('express-session');
+const { query } = require("./db_ops");
 
 app.use(session({
   secret: 'fowler',
@@ -14,48 +14,33 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-let db = new sqlite3.Database("./database/demo.db", (err) => {
-  if (err) {
-    return console.error(err.message);
-  }
-  console.log("Connected to the SQlite database.");
-});
-
-db.run(`
-  CREATE TABLE users(
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name VARCHAR(255),
-  email VARCHAR(255),
-  password VARCHAR(255));`,
-  (err) => {
-    if (err) {
-      return console.log("Users table identified.");
-    }
-    console.log("Users table created.");
-  }
-);
-db.close((err) => {
-  if (err) return console.error(err.message);
-  console.log("Close the database connection.");
-});
-
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    // origin: "http://localhost:3000",
+    origin: "*",
   })
 );
 app.use(express.json());
 
 require("dotenv").config();
 
-app.get("/", (req, res) => res.send("Hello World!"));
+app.get("/", (req, res) => res.send("CPSC408 Final Project Backend"));
 
-// API routes
+//sends back number of tables
+app.get("/table-count", (_, res) => {
+  query("SELECT * FROM airport;", (error, results) => {
+    if (error) {
+      console.error(error);
+      res.status(500).send('Server Error');
+    } else {
+      res.send({ count: results.length });
+    }
+  });
+});
+
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
 
-//DO NOT TOUCH unless you know what you're doing
-//Allows front end to communicate with backend
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "http://localhost:3000");
   res.header("Access-Control-Allow-Credentials", true);
