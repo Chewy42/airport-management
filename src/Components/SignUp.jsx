@@ -1,14 +1,26 @@
-import { AiOutlineLock, AiOutlineMail, AiOutlineUser } from "react-icons/ai";
+import {
+  AiFillClockCircle,
+  AiOutlineCalendar,
+  AiOutlineLineChart,
+  AiOutlineLock,
+  AiOutlineMail,
+  AiOutlinePhone,
+  AiOutlineUser,
+} from "react-icons/ai";
 import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "./Navbar";
 import axios from "axios";
 import "./SignUp.css";
+import { PiPersonArmsSpread } from "react-icons/pi";
+import { FaBaby } from "react-icons/fa6";
+import { BsGenderAmbiguous } from "react-icons/bs";
 
 const SignUp = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isEmployee, setIsEmployee] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleSignup = async (event) => {
@@ -47,6 +59,26 @@ const SignUp = () => {
           </h2>
 
           <form onSubmit={handleSignup}>
+            <div className="my-4 relative w-[50%] mx-auto flex justify-start align-middle">
+              <label
+                htmlFor="password"
+                className="text-primary font-medium select-none"
+              >
+                Are you an employee?:
+              </label>
+
+              <input
+                type="checkbox"
+                onChange={(e) => {
+                  setIsEmployee(!isEmployee);
+                }}
+                defaultChecked={false}
+                className="ml-2 border-2 focus:outline-none focus:border-black"
+              />
+              <p className="font-medium ml-1">
+                {isEmployee ? "Yes, I am an Employee." : "No"}
+              </p>
+            </div>
             <div className="relative w-[50%] mx-auto">
               <label
                 htmlFor="name"
@@ -65,6 +97,59 @@ const SignUp = () => {
               />
 
               <AiOutlineUser className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
+            </div>
+
+            <div className="my-4 relative w-[50%] mx-auto">
+              <label
+                htmlFor="name"
+                className="block text-primary font-semibold mb-2 select-none"
+              >
+                Last Name:
+              </label>
+
+              <input
+                type="text"
+                id="name"
+                onChange={(e) => {
+                  setName(e.target.value);
+                }}
+                className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black"
+              />
+
+              <AiOutlineUser className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
+            </div>
+
+            <div className="my-4 relative w-[50%] mx-auto">
+              <label
+                htmlFor="name"
+                className="block text-primary font-semibold mb-2 select-none"
+              >
+                Age:
+              </label>
+
+              <input
+                type="number"
+                className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black"
+              />
+
+              <AiOutlineLineChart className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
+            </div>
+
+            <div className="my-4 relative w-[50%] mx-auto">
+              <label
+                htmlFor="name"
+                className="block text-primary font-semibold mb-2 select-none"
+              >
+                Sex:
+              </label>
+
+              <select className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black">
+                <option value="Select">Select</option>
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+              </select>
+
+              <BsGenderAmbiguous className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
             </div>
 
             <div className="my-4 relative w-[50%] mx-auto">
@@ -88,6 +173,23 @@ const SignUp = () => {
 
             <div className="my-4 relative w-[50%] mx-auto">
               <label
+                htmlFor="phone_number"
+                className="block text-primary font-semibold mb-2 select-none"
+              >
+                Phone Number:
+              </label>
+
+              <input
+                type="number"
+                maxLength={10}
+                className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black"
+              />
+
+              <AiOutlinePhone className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
+            </div>
+
+            <div className="my-4 relative w-[50%] mx-auto">
+              <label
                 htmlFor="password"
                 className="block text-primary font-semibold mb-2 select-none"
               >
@@ -99,6 +201,24 @@ const SignUp = () => {
                 id="email"
                 onChange={(e) => {
                   setPassword(e.target.value);
+                }}
+                className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black"
+              />
+              <AiOutlineLock className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
+            </div>
+
+            <div className="my-4 relative w-[50%] mx-auto">
+              <label
+                htmlFor="password"
+                className="block text-primary font-semibold mb-2 select-none"
+              >
+                Confirm Password:
+              </label>
+
+              <input
+                type="password"
+                onChange={(e) => {
+                  console.log("changed");
                 }}
                 className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black"
               />

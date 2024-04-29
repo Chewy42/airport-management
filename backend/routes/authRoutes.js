@@ -1,46 +1,60 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const router = express.Router();
-const sqlite3 = require("sqlite3").verbose();
+const mysql = require("mysql");
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = "fowler";
 
-const db = new sqlite3.Database("./database/demo.db");
+// Database connection setup
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "password",
+  database: "AirportDB",
+});
 
-function getUserByUsername(username, callback) {
-  db.get(
-    "SELECT * FROM users WHERE username = ?",
-    [username],
-    function (err, row) {
-      callback(err, row);
-    }
-  );
-}
+//curl -X POST http://localhost:3001/api/auth/signup/employee -H "Content-Type: application/json" -d '{"firstName": "Cory","lastName": "Treverson","email": "ctreverson@americanairlines.com","password": "examplepassword","jobTitle": "Pilot","salary": 80000.00,"airlineId": 1,"airportId": 1,"ssn": "123456789"}'
 
-// example -> curl -X POST -H "Content-Type: application/json" -d '{"name":"Matthew","email":"mfavela@favela.com","password":"password"}' http://localhost:3001/api/auth/signup
-//routes go here
-// Signup route
-router.post("/signup", async (req, res) => {
-  const { name, email, password } = req.body;
+// Signup route for employee
+router.post("/signup/employee", async (req, res) => {
+  const {
+    firstName,
+    lastName,
+    email,
+    password,
+    jobTitle,
+    salary,
+    airlineId,
+    airportId,
+    ssn,
+  } = req.body;
 
   // Check if all required fields are provided
-  if (!name || !email || !password) {
-    return res.status(400).send("Name, email, and password are required.");
+  if (
+    !firstName ||
+    !lastName ||
+    !email ||
+    !password ||
+    !jobTitle ||
+    !salary ||
+    !airlineId ||
+    !airportId ||
+    !ssn
+  ) {
+    return res.status(400).send("All fields are required.");
   }
 
   try {
-    // Open the database connection
-    const db = new sqlite3.Database("./database/demo.db");
-
     // Check if the email already exists
     const existingUser = await new Promise((resolve, reject) => {
-      db.get(`SELECT * FROM users WHERE email = ?`, [email], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
+      db.query(
+        `SELECT * FROM employee WHERE email = ?`,
+        [email],
+        (err, rows) => {
+          if (err) reject(err);
+          resolve(rows.length > 0);
         }
-      });
+      );
     });
 
     if (existingUser) {
@@ -50,94 +64,164 @@ router.post("/signup", async (req, res) => {
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 8);
 
-    // Insert the user into the database
-    await new Promise((resolve, reject) => {
-      db.run(
-        `INSERT INTO users (name, email, password) VALUES (?, ?, ?)`,
-        [name, email, hashedPassword],
-        (err) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
+    const generateUniqueEmployeeId = async () => {
+      const employeeId = Math.floor(Math.random() * 1000000);
+      const existingEmployee = await new Promise((resolve, reject) => {
+        db.query(
+          `SELECT * FROM employee WHERE employee_id = ?`,
+          [employeeId],
+          (err, rows) => {
+            if (err) reject(err);
+            resolve(rows.length > 0);
           }
+        );
+      });
+
+      if (existingEmployee) {
+        return generateUniqueEmployeeId();
+      }
+
+      return employeeId;
+    };
+
+    const employeeId = await generateUniqueEmployeeId();
+
+    // Insert the employee into the database
+    await new Promise((resolve, reject) => {
+      db.query(
+        `INSERT INTO employee (employee_id, first_name, last_name, email, password, job_title, salary, airline_id, airport_id, ssn) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          employeeId,
+          firstName,
+          lastName,
+          email,
+          hashedPassword,
+          jobTitle,
+          salary,
+          airlineId,
+          airportId,
+          ssn,
+        ],
+        (err) => {
+          if (err) reject(err);
+          else resolve();
         }
       );
     });
 
-    // Close the database connection
-    db.close((err) => {
-      if (err) {
-        console.error(err.message);
-        return res.status(500).send("Error closing the database connection.");
-      }
-      console.log("Closed the database connection.");
-    });
-
-    res.status(200).send("User registered successfully.");
+    res.status(200).send("Employee registered successfully.");
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Error during signup.");
   }
 });
 
-// Signin route
+// Signup route for passenger
+router.post("/signup/passenger", async (req, res) => {
+  const { firstName, lastName, email, password, age, sex, phoneNumber } =
+    req.body;
 
-router.post("/signin", async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).send("Email and password are required.");
+  // Check if all required fields are provided
+  if (
+    !firstName ||
+    !lastName ||
+    !email ||
+    !password ||
+    !age ||
+    !sex ||
+    !phoneNumber
+  ) {
+    return res.status(400).send("All fields are required.");
   }
 
-  // Open the database connection
-  let db = new sqlite3.Database("./database/demo.db", (err) => {
-    if (err) {
-      console.error(err.message);
-      return res.status(500).send("Error connecting to the database.");
-    }
-  });
+  try {
+    // Check if the email already exists
+    const existingUser = await new Promise((resolve, reject) => {
+      db.query(
+        `SELECT * FROM passenger WHERE email = ?`,
+        [email],
+        (err, rows) => {
+          if (err) reject(err);
+          resolve(rows.length > 0);
+        }
+      );
+    });
 
-  // Check if the email exists
-  db.get(`SELECT * FROM users WHERE email = ?`, [email], async (err, row) => {
-    if (err) {
-      console.error(err.message);
-      return res.status(500).send("Error querying the database.");
-    }
-
-    // If the email doesn't exist, send an error response
-    if (!row) {
-      return res.status(400).send("Email not found.");
+    if (existingUser) {
+      return res.status(400).send("Email already exists.");
     }
 
-    // If the email exists, compare the passwords
-    try {
-      const match = await bcrypt.compare(password, row.password);
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 8);
 
-      if (!match) {
-        return res.status(401).send("Authentication failed.");
+    // Insert the passenger into the database
+    await new Promise((resolve, reject) => {
+      db.query(
+        `INSERT INTO passenger (first_name, last_name, email, password, age, sex, phone_number) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [firstName, lastName, email, hashedPassword, age, sex, phoneNumber],
+        (err) => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+
+    res.status(200).send("Passenger registered successfully.");
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Error during signup.");
+  }
+});
+
+// Common Signin route for both passenger and employee
+router.post("/signin", async (req, res) => {
+  const { email, password, userType } = req.body;
+
+  if (!email || !password || !userType) {
+    return res.status(400).send("Email, password, and user type are required.");
+  }
+
+  const table = userType === "employee" ? "employee" : "passenger";
+
+  // Check if the email exists in the correct table
+  db.query(
+    `SELECT * FROM ${table} WHERE email = ?`,
+    [email],
+    async (err, rows) => {
+      if (err) {
+        console.error(err.message);
+        return res.status(500).send("Error querying the database.");
       }
 
-      // If the passwords match, create a JWT
-      const token = jwt.sign({ id: row.id }, JWT_SECRET, { expiresIn: "100h" });
+      if (rows.length === 0) {
+        return res.status(400).send("Email not found.");
+      }
 
-      // Send the JWT in the response
-      res.json({ token });
-    } catch (err) {
-      console.error(err.message);
-      return res.status(500).send("Error during authentication.");
+      const user = rows[0];
+
+      try {
+        const match = await bcrypt.compare(password, user.password);
+
+        if (!match) {
+          return res.status(401).send("Authentication failed.");
+        }
+
+        // If the passwords match, create a JWT
+        const token = jwt.sign(
+          { id: user.employee_id || user.passenger_id },
+          JWT_SECRET,
+          {
+            expiresIn: "100h",
+          }
+        );
+
+        res.json({ token });
+      } catch (err) {
+        console.error(err.message);
+        return res.status(500).send("Error during authentication.");
+      }
     }
-  });
-
-  // Close the database connection
-  db.close((err) => {
-    if (err) {
-      console.error(err.message);
-      return res.status(500).send("Error closing the database connection.");
-    }
-    console.log("Closed the database connection.");
-  });
-
+  );
 });
 
 module.exports = router;
