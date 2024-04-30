@@ -26,20 +26,10 @@ require("dotenv").config();
 
 app.get("/", (req, res) => res.send("CPSC408 Final Project Backend"));
 
-//sends back number of tables
-app.get("/table-count", (_, res) => {
-  query("SELECT * FROM airport;", (error, results) => {
-    if (error) {
-      console.error(error);
-      res.status(500).send('Server Error');
-    } else {
-      res.send({ count: results.length });
-    }
-  });
-});
-
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
+const helperRoutes = require("./routes/helperRoutes");
+app.use("/api/helper", helperRoutes);
 
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "http://localhost:3000");

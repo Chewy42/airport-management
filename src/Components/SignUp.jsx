@@ -1,20 +1,17 @@
 import {
-  AiFillClockCircle,
-  AiOutlineCalendar,
   AiOutlineLineChart,
   AiOutlineLock,
   AiOutlineMail,
   AiOutlinePhone,
   AiOutlineUser,
 } from "react-icons/ai";
-import React, { useRef, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "./Navbar";
 import axios from "axios";
 import "./SignUp.css";
-import { PiPersonArmsSpread } from "react-icons/pi";
-import { FaBaby } from "react-icons/fa6";
 import { BsGenderAmbiguous } from "react-icons/bs";
+import { SlPlane } from "react-icons/sl";
 
 const SignUp = () => {
   const [name, setName] = useState("");
@@ -22,6 +19,63 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [isEmployee, setIsEmployee] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  const [airlines, setAirlines] = useState([]);
+  const [selectedAirline, setSelectedAirline] = useState("");
+  const [airports, setAirports] = useState([]);
+  const [filteredAirports, setFilteredAirports] = useState([]);
+  const [rendered, setRendered] = useState(false);
+
+  useEffect(() => {
+    if (rendered) return;
+    const fetchAirlines = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:3001/api/helper/airlines"
+        );
+        console.log(response.data);
+        setAirlines(response.data);
+      } catch (error) {
+        console.error(`Error: ${error}`);
+      }
+    };
+
+    const fetchAirports = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:3001/api/helper/airports"
+        );
+        console.log(response.data);
+        setAirports(response.data);
+      } catch (error) {
+        console.error(`Error: ${error}`);
+      }
+    };
+
+    const fetchData = () => {
+      fetchAirlines();
+      fetchAirports();
+    };
+
+    if (!rendered) {
+      fetchData();
+      setRendered(true);
+    }
+  }, [rendered]);
+
+  useEffect(() => {
+    const filterAirports = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:3001/api/helper/airports?airline=${selectedAirline}`
+        );
+        console.log(response.data);
+        setFilteredAirports(response.data);
+      } catch (error) {
+        console.error(`Error: ${error}`);
+      }
+    };
+  }, [selectedAirline]);
 
   const handleSignup = async (event) => {
     event.preventDefault();
@@ -44,9 +98,7 @@ const SignUp = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar signup={true} />
-      {/* CONTAINER THAT CENTERS SIGNUP CONTAINER */}
       <main className="flex-grow bg-[#f0f4f9] relative flex flex-col justify-center align-top">
-        {/* SIGNUP CONTAINER */}
         <div className="mx-auto mt-[150px] mb-auto py-[36px] w-full sm:w-[70%] bg-white rounded-[28px] border-2">
           {/* Error Message Display */}
           {/* {errorMessage && (
@@ -79,6 +131,61 @@ const SignUp = () => {
                 {isEmployee ? "Yes, I am an Employee." : "No"}
               </p>
             </div>
+            {isEmployee && (
+              <div className="my-4 relative w-[50%] mx-auto">
+                <label
+                  htmlFor="name"
+                  className="block text-primary font-semibold mb-2 select-none"
+                >
+                  Airline:
+                </label>
+
+                <select
+                  className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black"
+                  onChange={(e) => {
+                    setSelectedAirline(e.target.value);
+                  }}
+                >
+                  <option value="Select">Select</option>
+                  {airlines.map((airline) => (
+                    <option
+                      key={airline.airline_name}
+                      value={airline.airline_name}
+                    >
+                      {airline.airline_name}
+                    </option>
+                  ))}
+                </select>
+
+                <SlPlane className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
+              </div>
+            )}
+
+            {isEmployee && selectedAirline == "Select" ? null : (
+              <div className="my-4 relative w-[50%] mx-auto">
+                <label
+                  htmlFor="name"
+                  className="block text-primary font-semibold mb-2 select-none"
+                >
+                  Airport:
+                </label>
+
+                <select className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black">
+                  <option value="Select">Select</option>
+                  {filteredAirports.map((airport) => (
+                    <option
+                      key={airport.airport_name}
+                      value={airport.airport_name}
+                    >
+                      {airport.airport_name}
+                    </option>
+                  ))}
+                </select>
+
+                <SlPlane className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
+              </div>
+            )}
+
             <div className="relative w-[50%] mx-auto">
               <label
                 htmlFor="name"
@@ -89,7 +196,7 @@ const SignUp = () => {
 
               <input
                 type="text"
-                id="name"
+                id="firstname"
                 onChange={(e) => {
                   setName(e.target.value);
                 }}
@@ -109,7 +216,7 @@ const SignUp = () => {
 
               <input
                 type="text"
-                id="name"
+                id="lastname"
                 onChange={(e) => {
                   setName(e.target.value);
                 }}
@@ -197,8 +304,8 @@ const SignUp = () => {
               </label>
 
               <input
-                type="email"
-                id="email"
+                type="password"
+                id="password"
                 onChange={(e) => {
                   setPassword(e.target.value);
                 }}
