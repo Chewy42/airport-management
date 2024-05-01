@@ -106,6 +106,8 @@ def insert_ticket(cursor, flight_id, passenger_id, employee_id):
     )
 
 def main():
+    conn = None
+    cursor = None
     try:
         conn = connect_db()
         cursor = conn.cursor()
@@ -121,10 +123,12 @@ def main():
         conn.commit()
     except Exception as e:
         print("An error occurred:", e)
-        conn.rollback()
+        if conn is not None:
+            conn.rollback()
     finally:
-        cursor.close()
-        conn.close()
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
 
-if __name__ == "__main__":
-    main()
+main()

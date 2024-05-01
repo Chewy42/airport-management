@@ -109,11 +109,66 @@ router.post("/signup/employee", async (req, res) => {
       );
     });
 
-    res.status(200).send("Employee registered successfully.");
+    const token = jwt.sign({ id: employeeId }, JWT_SECRET, {
+      expiresIn: "100h",
+    });
+
+    res.status(200).send({ token });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Error during signup.");
   }
+});
+
+// sign in
+router.post("/signin", async (req, res) => {
+  const { email, password, userType } = req.body;
+
+  if (!email || !password || !userType) {
+    return res.status(400).send("Email, password, and user type are required.");
+  }
+
+  const table = userType === "employee" ? "employee" : "passenger";
+
+  // Check if the email exists in the correct table
+  db.query(
+    `SELECT * FROM ${table} WHERE email = ?`,
+    [email],
+    async (err, rows) => {
+      if (err) {
+        console.error(err.message);
+        return res.status(500).send("Error querying the database.");
+      }
+
+      if (rows.length === 0) {
+        return res.status(400).send("Email not found.");
+      }
+
+      const user = rows[0];
+
+      try {
+        const match = await bcrypt.compare(password, user.password);
+
+        if (!match) {
+          return res.status(401).send("Authentication failed.");
+        }
+
+        // If the passwords match, create a JWT
+        const token = jwt.sign(
+          { id: user.employee_id || user.passenger_id },
+          JWT_SECRET,
+          {
+            expiresIn: "100h",
+          }
+        );
+
+        res.json({ token });
+      } catch (err) {
+        console.error(err.message);
+        return res.status(500).send("Error during authentication.");
+      }
+    }
+  );
 });
 
 // Signup route for passenger
@@ -166,7 +221,11 @@ router.post("/signup/passenger", async (req, res) => {
       );
     });
 
-    res.status(200).send("Passenger registered successfully.");
+    const token = jwt.sign({ id: email }, JWT_SECRET, {
+      expiresIn: "100h",
+    });
+
+    res.status(200).send({ token:token, user:req.body });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Error during signup.");

@@ -1,13 +1,18 @@
 import { AiOutlineMail, AiOutlineLock } from "react-icons/ai";
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "./Navbar";
 import axios from "axios";
+import { AuthContext } from "../Contexts/AuthContext";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+
+  const { setIsAuthenticated } = useContext(AuthContext);
+
+  const [isEmployee, setIsEmployee] = useState(false);
 
   const handleSignIn = async (event) => {
     event.preventDefault();
@@ -18,10 +23,18 @@ const SignIn = () => {
       result = await axios.post("http://localhost:3001/api/auth/signin", {
         email: email,
         password: password,
+        userType: isEmployee ? "employee" : "customer",
       });
+
+      if (result.status === 200) {
+        localStorage.setItem("token", result.data.token);
+        setIsAuthenticated(true);
+      }
     } catch (error) {
       setErrorMessage("An error occurred during signin. Please try again.");
-      console.error(`Error: ${error}`);
+      alert(
+        "An error occured during signup. Please double check your login information and try again."
+      );
     }
     console.log(result);
   };
@@ -65,14 +78,35 @@ const SignIn = () => {
               </label>
 
               <input
-                type="email"
-                id="email"
+                type="password"
+                id="password"
                 onChange={(e) => {
                   setPassword(e.target.value);
                 }}
                 className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black"
               />
               <AiOutlineLock className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
+            </div>
+
+            <div className="my-4 relative w-[50%] mx-auto flex justify-start align-middle">
+              <label
+                htmlFor="password"
+                className="text-primary font-medium select-none"
+              >
+                Are you an employee?:
+              </label>
+
+              <input
+                type="checkbox"
+                onChange={(e) => {
+                  setIsEmployee(!isEmployee);
+                }}
+                defaultChecked={false}
+                className="ml-2 border-2 focus:outline-none focus:border-black"
+              />
+              <p className="font-medium ml-1">
+                {isEmployee ? "Yes, I am an Employee." : "No"}
+              </p>
             </div>
 
             <div className="flex flex-col justfiy-center align-middle w-[50%] mx-auto">
@@ -87,7 +121,7 @@ const SignIn = () => {
                 type="submit"
                 className="select-none bg-green-500 hover:scale-[103%] transition-all ease-linear duration-200 text-white font-medium px-6 py-3 mt-4 rounded-md shadow-md w-[100%] mx-auto hover:shadow-xl"
               >
-                Sign Up
+                Sign In
               </button>
             </div>
           </form>

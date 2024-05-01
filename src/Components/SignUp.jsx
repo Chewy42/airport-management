@@ -1,4 +1,5 @@
 import {
+  AiOutlineCreditCard,
   AiOutlineLineChart,
   AiOutlineLock,
   AiOutlineMail,
@@ -12,9 +13,18 @@ import axios from "axios";
 import "./SignUp.css";
 import { BsGenderAmbiguous } from "react-icons/bs";
 import { SlPlane } from "react-icons/sl";
+import { FaBaby } from "react-icons/fa";
+import { isElement } from "react-dom/test-utils";
 
 const SignUp = () => {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [age, setAge] = useState("");
+  const [sex, setSex] = useState("M"); // M or F
+  const [jobTitle, setJobTitle] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [ssn, setSsn] = useState("");
+  const [salary, setSalary] = useState("0");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isEmployee, setIsEmployee] = useState(false);
@@ -23,6 +33,7 @@ const SignUp = () => {
   const [airlines, setAirlines] = useState([]);
   const [selectedAirline, setSelectedAirline] = useState("");
   const [airports, setAirports] = useState([]);
+  const [selectedAirport, setSelectedAirport] = useState("");
   const [filteredAirports, setFilteredAirports] = useState([]);
   const [rendered, setRendered] = useState(false);
 
@@ -52,6 +63,18 @@ const SignUp = () => {
       }
     };
 
+    const filterAirportsByAirline = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:3001/api/helper/airports?airline=${selectedAirline}`
+        );
+        console.log(response.data);
+        setFilteredAirports(response.data);
+      } catch (error) {
+        console.error(`Error: ${error}`);
+      }
+    };
+
     const fetchData = () => {
       fetchAirlines();
       fetchAirports();
@@ -75,6 +98,10 @@ const SignUp = () => {
         console.error(`Error: ${error}`);
       }
     };
+
+    if (selectedAirline !== "Select") {
+      filterAirports();
+    }
   }, [selectedAirline]);
 
   const handleSignup = async (event) => {
@@ -82,17 +109,59 @@ const SignUp = () => {
 
     let result;
 
-    try {
-      result = await axios.post("http://localhost:3001/api/auth/signup", {
-        name: name,
+    if (isEmployee === true) {
+      const airlineId = airlines.find(
+        (airline) => airline.airline_name === selectedAirline
+      ).airline_id;
+
+      const airportId = airports.find(
+        (airport) => airport.airport_name === selectedAirport
+      ).airport_id;
+
+      const reqbody = {
+        firstName: firstName,
+        lastName: lastName,
         email: email,
         password: password,
-      });
-    } catch (error) {
-      setErrorMessage("An error occurred during signup. Please try again.");
-      console.error(`Error: ${error}`);
+        jobTitle: jobTitle,
+        salary: salary,
+        airlineId: airlineId,
+        airportId: airportId,
+        ssn: ssn,
+      };
+
+      console.log(reqbody);
+
+      try {
+        result = await axios.post(
+          "http://localhost:3001/api/auth/signup/employee",
+          reqbody
+        );
+      } catch (error) {
+        setErrorMessage("An error occurred during signup. Please try again.");
+        console.error(`Error: ${error}`);
+      }
+    } else {
+      try {
+        result = await axios.post(
+          "http://localhost:3001/api/auth/signup/passenger",
+          {
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+            password: password,
+            age: age,
+            sex: sex,
+            phoneNumber: phoneNumber,
+          }
+        );
+        console.log(result.data);
+      } catch (error) {
+        setErrorMessage("An error occurred during signup. Please try again.");
+        console.error(`Error: ${error}`);
+      }
     }
-    console.log(result);
+    console.log("reached", isEmployee);
   };
 
   return (
@@ -161,7 +230,7 @@ const SignUp = () => {
               </div>
             )}
 
-            {isEmployee && selectedAirline == "Select" ? null : (
+            {isEmployee && selectedAirline !== "Select" ? (
               <div className="my-4 relative w-[50%] mx-auto">
                 <label
                   htmlFor="name"
@@ -170,7 +239,12 @@ const SignUp = () => {
                   Airport:
                 </label>
 
-                <select className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black">
+                <select
+                  onChange={(e) => {
+                    setSelectedAirport(e.target.value);
+                  }}
+                  className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black"
+                >
                   <option value="Select">Select</option>
                   {filteredAirports.map((airport) => (
                     <option
@@ -184,7 +258,7 @@ const SignUp = () => {
 
                 <SlPlane className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
               </div>
-            )}
+            ) : null}
 
             <div className="relative w-[50%] mx-auto">
               <label
@@ -198,7 +272,7 @@ const SignUp = () => {
                 type="text"
                 id="firstname"
                 onChange={(e) => {
-                  setName(e.target.value);
+                  setFirstName(e.target.value);
                 }}
                 className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black"
               />
@@ -218,7 +292,7 @@ const SignUp = () => {
                 type="text"
                 id="lastname"
                 onChange={(e) => {
-                  setName(e.target.value);
+                  setLastName(e.target.value);
                 }}
                 className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black"
               />
@@ -236,6 +310,9 @@ const SignUp = () => {
 
               <input
                 type="number"
+                onChange={(e) => {
+                  setAge(e.target.value);
+                }}
                 className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black"
               />
 
@@ -250,7 +327,12 @@ const SignUp = () => {
                 Sex:
               </label>
 
-              <select className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black">
+              <select
+                onChange={(e) => {
+                  setSex(e.target.value);
+                }}
+                className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black"
+              >
                 <option value="Select">Select</option>
                 <option value="M">Male</option>
                 <option value="F">Female</option>
@@ -289,11 +371,57 @@ const SignUp = () => {
               <input
                 type="number"
                 maxLength={10}
+                onChange={(e) => {
+                  setPhoneNumber(e.target.value);
+                }}
                 className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black"
               />
 
               <AiOutlinePhone className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
             </div>
+            {isEmployee && (
+              <div className="my-4 relative w-[50%] mx-auto">
+                <label
+                  htmlFor="name"
+                  className="block text-primary font-semibold mb-2 select-none"
+                >
+                  Job Title:
+                </label>
+
+                <input
+                  type="text"
+                  id="jobtitle"
+                  onChange={(e) => {
+                    setJobTitle(e.target.value);
+                  }}
+                  className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black"
+                />
+
+                <AiOutlineUser className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
+              </div>
+            )}
+
+            {isEmployee && (
+              <div className="my-4 relative w-[50%] mx-auto">
+                <label
+                  htmlFor="ssn"
+                  className="block text-primary font-semibold mb-2 select-none"
+                >
+                  SSN:
+                </label>
+
+                <input
+                  type="number"
+                  maxLength={9}
+                  onChange={(e) => {
+                    setSsn(e.target.value);
+                  }}
+                  className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black"
+                />
+
+                <AiOutlineCreditCard className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
+              </div>
+            )}
 
             <div className="my-4 relative w-[50%] mx-auto">
               <label

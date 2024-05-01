@@ -1,30 +1,24 @@
-//create react auth context
-
 import React, { createContext, useState, useEffect } from 'react';
-import { auth } from '../firebase';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [currentUser, setCurrentUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-    
+    const [currentUser, setCurrentUser] = useState({});
+    const [loading, setLoading] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
     useEffect(() => {
-        auth.onAuthStateChanged((user) => {
-        setCurrentUser(user);
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        if (token) {
+            setIsAuthenticated(true);
+        }
         setLoading(false);
-        });
     }, []);
     
-    if (loading) {
-        return <></>;
-    }
-    
     return (
-        <AuthContext.Provider value={{ currentUser }}>
-        {children}
+        <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
+            {loading ? <div>Loading...</div> : children}
         </AuthContext.Provider>
     );
 }
-
-export default AuthContext;
