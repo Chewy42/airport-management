@@ -13,6 +13,7 @@ import Homepage from "./Components/Homepage";
 import SignIn from "./Components/SignIn";
 import SignUp from "./Components/SignUp";
 import Dashboard from "./Components/Dashboard";
+import Booking from "./Components/Booking";
 
 function App() {
   // FOR AUTHENTICATION AND PUBLIC/PRIVATE ROUTES
@@ -34,6 +35,7 @@ function App() {
           <Route path="/signin" element={<PublicRoute element={<SignIn />} />} />
           <Route path="/signup" element={<PublicRoute element={<SignUp />} />} />
           <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
+          <Route path="/dashboard/booking" element={<PrivateRoute element={<Booking />} />} />
         </Routes>
       </Router>
     </>

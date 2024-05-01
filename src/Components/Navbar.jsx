@@ -1,4 +1,4 @@
-import React, {useContext} from "react";
+import React, { useContext } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { IoAirplaneOutline } from "react-icons/io5";
 import { AuthContext } from "../Contexts/AuthContext";
@@ -6,13 +6,12 @@ import { AuthContext } from "../Contexts/AuthContext";
 function Navbar() {
   const location = useLocation();
 
-  const {isAuthenticated} = useContext(AuthContext);
+  const { isAuthenticated } = useContext(AuthContext);
 
   const handleSignOut = () => {
     localStorage.removeItem("token");
     window.location.href = "/";
-  }
-  
+  };
 
   return (
     <div className="fixed inset-x-0 top-0 flex items-center justify-between px-4 bg-white shadow-md h-16 z-10">
@@ -28,12 +27,22 @@ function Navbar() {
 
       <div className="flex items-center justify-end flex-1 space-x-4">
         {isAuthenticated ? (
-          <button
-            onClick={handleSignOut}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded hover:bg-gray-700 transition-all ease-linear duration-150"
-          >
-            Sign Out
-          </button>
+          <div>
+            {location.pathname !== "/dashboard/booking" && (
+              <Link
+                to="/dashboard/booking"
+                className="mr-4 px-4 py-2 text-sm font-medium text-white bg-green-500 rounded hover:bg-green-600 transition-all ease-linear duration-150"
+              >
+                Book a Flight
+              </Link>
+            )}
+            <button
+              onClick={handleSignOut}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded hover:bg-red-600 transition-all ease-linear duration-150"
+            >
+              Sign Out
+            </button>
+          </div>
         ) : (
           <>
             {location.pathname !== "/signin-p2" &&

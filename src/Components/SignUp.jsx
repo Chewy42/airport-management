@@ -6,7 +6,7 @@ import {
   AiOutlinePhone,
   AiOutlineUser,
 } from "react-icons/ai";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "./Navbar";
 import axios from "axios";
@@ -15,6 +15,7 @@ import { BsGenderAmbiguous } from "react-icons/bs";
 import { SlPlane } from "react-icons/sl";
 import { FaBaby } from "react-icons/fa";
 import { isElement } from "react-dom/test-utils";
+import { AuthContext } from "../Contexts/AuthContext";
 
 const SignUp = () => {
   const [firstName, setFirstName] = useState("");
@@ -29,6 +30,7 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [isEmployee, setIsEmployee] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const { setIsAuthenticated } = useContext(AuthContext);
 
   const [airlines, setAirlines] = useState([]);
   const [selectedAirline, setSelectedAirline] = useState("");
@@ -137,6 +139,12 @@ const SignUp = () => {
           "http://localhost:3001/api/auth/signup/employee",
           reqbody
         );
+        if (result.status === 200) {
+          localStorage.setItem("token", result.data.token);
+          localStorage.setItem("userType", "employee");
+          localStorage.setItem("email", email);
+          setIsAuthenticated(true);
+        }
       } catch (error) {
         setErrorMessage("An error occurred during signup. Please try again.");
         console.error(`Error: ${error}`);
@@ -156,6 +164,13 @@ const SignUp = () => {
           }
         );
         console.log(result.data);
+
+        if (result.status === 200) {
+          localStorage.setItem("token", result.data.token);
+          localStorage.setItem("userType", "passenger");
+          localStorage.setItem("email", email);
+          setIsAuthenticated(true);
+        }
       } catch (error) {
         setErrorMessage("An error occurred during signup. Please try again.");
         console.error(`Error: ${error}`);
