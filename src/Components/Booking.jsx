@@ -94,6 +94,40 @@ const Booking = () => {
     e.preventDefault();
     let outbound_airport_id = outboundAirport.airport_id;
     let inbound_airport_id = inboundAirport.airport_id;
+
+    if (selectedAirline === "Select") {
+      alert("Please select an airline.");
+      return;
+    } else if (outbound_airport_id === undefined) {
+      alert("Please select an outbound airport.");
+      return;
+    } else if (inbound_airport_id === undefined) {
+      alert("Please select an inbound airport.");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        "http://localhost:3001/api/booking/book",
+        {
+          airline_name: selectedAirline,
+          outbound_airport_id: outbound_airport_id,
+          inbound_airport_id: inbound_airport_id,
+          is_employee: isEmployee,
+        }
+      );
+
+      console.log(response.data);
+
+      if (response.data.length === 0) {
+        alert("No flights found.");
+        return;
+      }
+
+      alert("Flight booked successfully.");
+    } catch (error) {
+      console.error(`Error: ${error}`);
+    }
   };
 
   return (
@@ -112,7 +146,7 @@ const Booking = () => {
           </h2>
 
           <form onSubmit={handleClick}>
-            <div className="my-4 relative w-[50%] mx-auto">
+            {/* <div className="my-4 relative w-[50%] mx-auto">
               <label
                 htmlFor="name"
                 className="block text-primary font-semibold mb-2 select-none"
@@ -138,7 +172,7 @@ const Booking = () => {
               </select>
 
               <SlPlane className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
-            </div>
+            </div> */}
 
             <div className="my-4 relative w-[50%] mx-auto">
               <label
@@ -151,7 +185,14 @@ const Booking = () => {
               <select className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black">
                 <option value="Select">Select</option>
                 {cities.map((city) => (
-                  <option key={city.city_name} value={city.city_name}>
+                  <option
+                    key={
+                      city.city_name +
+                      "-outbound-" +
+                      (Math.floor(Math.random() * 900) + 100).toString()
+                    }
+                    value={city.city_name}
+                  >
                     {city.city_name}
                   </option>
                 ))}
@@ -171,7 +212,14 @@ const Booking = () => {
               <select className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black">
                 <option value="Select">Select</option>
                 {cities.map((city) => (
-                  <option key={city.city_name} value={city.city_name}>
+                  <option
+                    key={
+                      city.city_name +
+                      "-inbound-" +
+                      (Math.floor(Math.random() * 900) + 100).toString()
+                    }
+                    value={city.city_name}
+                  >
                     {city.city_name}
                   </option>
                 ))}

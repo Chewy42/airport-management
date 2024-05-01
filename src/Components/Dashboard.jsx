@@ -15,26 +15,26 @@ function Dashboard() {
       });
   }, []);
 
-  useEffect(() => {
-  // use email in localstorage to get users id
-  // use users id to get their flights
-  let temp_email = localStorage.getItem("email");
-  let temp_id;
+//   useEffect(() => {
+//   // use email in localstorage to get users id
+//   // use users id to get their flights
+//   let temp_email = localStorage.getItem("email");
+//   let temp_id;
 
-  // Assuming you have an API endpoint to get user by email
-  fetch(`http://localhost:3001/api/helper/user?email=${temp_email}`)
-    .then((res) => res.json())
-    .then((data) => {
-      temp_id = data.id;
+//   // Assuming you have an API endpoint to get user by email
+//   fetch(`http://localhost:3001/api/helper/user?email=${temp_email}`)
+//     .then((res) => res.json())
+//     .then((data) => {
+//       temp_id = data.id;
 
-      // Assuming you have an API endpoint to get flights by user id
-      fetch(`http://localhost:3001/api/helper/flights?userId=${temp_id}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setYourFlights(data);
-        });
-    });
-}, [flights]);
+//       // Assuming you have an API endpoint to get flights by user id
+//       fetch(`http://localhost:3001/api/helper/flights?userId=${temp_id}`)
+//         .then((res) => res.json())
+//         .then((data) => {
+//           setYourFlights(data);
+//         });
+//     });
+// }, [flights]);
 
   return (
     <div className="flex flex-col items-center justify-center bg-gray-100">
