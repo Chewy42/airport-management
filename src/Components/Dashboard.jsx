@@ -6,13 +6,11 @@ function Dashboard() {
   const [flights, setFlights] = useState([]);
   const [firstName, setFirstName] = useState("");
 
-  // Getting authentication details from local storage
   const token = localStorage.getItem("token");
   const userType = localStorage.getItem("userType");
   const uid = localStorage.getItem("uid");
 
   useEffect(() => {
-    // Fetch flight details from the API
     axios
       .get("http://localhost:3001/api/helper/flights")
       .then((response) => {
@@ -21,8 +19,6 @@ function Dashboard() {
       .catch((error) => {
         console.error("Failed to fetch flights:", error);
       });
-
-    // Fetch the first name of the user
     axios
       .post("http://localhost:3001/api/user/name", { token, userType, uid })
       .then((response) => {
@@ -31,7 +27,7 @@ function Dashboard() {
       .catch((error) => {
         console.error("Failed to fetch user data:", error);
       });
-  }, [token, userType, uid]); // Dependencies for useEffect to control when it re-runs
+  }, [token, userType, uid]);
 
   return (
     <div className="flex flex-col items-center justify-center bg-gray-100 pt-16">

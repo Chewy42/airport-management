@@ -69,10 +69,8 @@ function MyFlights() {
   const handleCancelFlight = async (e) => {
     let flight = ticketInfo;
     e.preventDefault();
-    // get uid from local storage
     const uid = localStorage.getItem("uid");
     const token = localStorage.getItem("token");
-    // post to /api/booking/book with flight_id, passenger_id or employee_id, seat_number (randomly generated), ticket price we have listed for that flight in the html below, is_working_flight BOOLEAN
 
     try {
       const response = await axios.post(
@@ -87,7 +85,6 @@ function MyFlights() {
         }
       );
 
-      //tell them success and give them their seat number and price
       alert(`Successfully canceled your flight.`);
     } catch (error) {
       alert(`${error}}`);
@@ -95,62 +92,112 @@ function MyFlights() {
     }
   };
 
+  const exportMyTickets = () => {
+    const headers = [
+      "Flight ID",
+      "Departure Time",
+      "Status",
+      "Outbound City",
+      "Outbound Airport",
+      "Inbound City",
+      "Inbound Airport",
+      "Airline",
+      "Price",
+    ];
+    const csvRows = myTickets.map((ticket) =>
+      [
+        ticket.flight_id,
+        new Date(ticket.flight_departure_time).toLocaleString("en-US"),
+        ticket.is_delayed ? "Delayed" : "On time",
+        ticket.outbound_city,
+        ticket.outbound_airport,
+        ticket.inbound_city,
+        ticket.inbound_airport,
+        ticket.airline_name,
+        `$${ticket.ticket_price}`,
+      ].join(",")
+    );
+
+    const csvData = [headers.join(","), ...csvRows].join("\n");
+
+    const blob = new Blob([csvData], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "MyTickets.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    alert(`Successfully exported your tickets to CSV.`);
+  };
+
   return (
     <div className="flex flex-col items-center justify-center bg-gray-100 pt-16">
       <Navbar />
       <main className="min-w-full max-w-full w-full min-h-screen bg-[#f0f4f9] flex flex-col items-center justify-center align-middle">
         <div className="w-3/5 bg-white rounded-xl border shadow-lg p-6 mt-4 mx-auto mb-auto">
-          <h1 className="text-2xl font-bold mb-4">Your Flights:</h1>
+          <div className="flex justify-start align-middle">
+            <h1 className="text-2xl font-bold ml-2 mr-0">Your Flights:</h1>
+            <button
+              className="ml-2 mr-auto my-auto bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+              onClick={() => exportMyTickets()}
+            >
+              Export to CSV
+            </button>
+          </div>
           <div className="mt-4">
             {myTickets.length > 0 ? (
               myTickets.map((ticket) => (
-                <form onSubmit={(e)=>handleCancelFlight(e,ticket)}>
-                <div
-                  key={ticket.ticket_id}
-                  className="p-4 bg-gray-100 rounded-lg mb-2 text-left"
-                >
-                  <div className="text-left">
-                    <p>
-                      <strong>Flight ID:</strong> {ticket.flight_id}
-                    </p>
-                    <p>
-                      <strong>Departure:</strong>{" "}
-                      {new Date(ticket.flight_departure_time).toLocaleString(
-                        "en-US"
-                      )}
-                    </p>
-                    <p>
-                      <strong>Status:</strong>{" "}
-                      {ticket.is_delayed ? "Delayed" : "On time"}
-                    </p>
-                    <p>
-                      <strong>Outbound City:</strong> {ticket.outbound_city}
-                    </p>
-                    <p>
-                      <strong>Outbound Airport:</strong>{" "}
-                      {ticket.outbound_airport}
-                    </p>
-                    <p>
-                      <strong>Inbound City:</strong> {ticket.inbound_city}
-                    </p>
-                    <p>
-                      <strong>Inbound Airport:</strong> {ticket.inbound_airport}
-                    </p>
-                    <p>
-                      <strong>Airline:</strong> {ticket.airline_name}
-                    </p>
-                    <p>
-                      <strong>Price:</strong> ${ticket.ticket_price}
-                    </p>
-                  </div>
-                  <button
-                    className="mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                    type="submit"
-                    onClick={() => handleButtonClick(ticket)}
+                <form onSubmit={(e) => handleCancelFlight(e, ticket)}>
+                  <div
+                    key={ticket.ticket_id}
+                    className="p-4 bg-gray-100 rounded-lg mb-2 text-left"
                   >
-                    Cancel Flight
-                  </button>
-                </div>
+                    <div className="text-left">
+                      <p>
+                        <strong>Flight ID:</strong> {ticket.flight_id}
+                      </p>
+                      <p>
+                        <strong>Departure:</strong>{" "}
+                        {new Date(ticket.flight_departure_time).toLocaleString(
+                          "en-US"
+                        )}
+                      </p>
+                      <p>
+                        <strong>Status:</strong>{" "}
+                        {ticket.is_delayed ? "Delayed" : "On time"}
+                      </p>
+                      <p>
+                        <strong>Outbound City:</strong> {ticket.outbound_city}
+                      </p>
+                      <p>
+                        <strong>Outbound Airport:</strong>{" "}
+                        {ticket.outbound_airport}
+                      </p>
+                      <p>
+                        <strong>Inbound City:</strong> {ticket.inbound_city}
+                      </p>
+                      <p>
+                        <strong>Inbound Airport:</strong>{" "}
+                        {ticket.inbound_airport}
+                      </p>
+                      <p>
+                        <strong>Airline:</strong> {ticket.airline_name}
+                      </p>
+                      <p>
+                        <strong>Price:</strong> ${ticket.ticket_price}
+                      </p>
+                    </div>
+                    <button
+                      className="mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                      type="submit"
+                      onClick={() => handleButtonClick(ticket)}
+                    >
+                      Cancel Flight
+                    </button>
+                  </div>
                 </form>
               ))
             ) : (
