@@ -205,7 +205,7 @@ const Booking = () => {
                         <strong>Airline:</strong> {flight.airline_name}
                       </p>
                       <p>
-                        <strong>Price:</strong> {flight.price}
+                        <strong>Price:</strong> ${flight.price}
                       </p>
                     </div>
 

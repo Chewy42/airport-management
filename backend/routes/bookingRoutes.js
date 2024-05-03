@@ -55,4 +55,49 @@ router.post("/book/flight", async (req, res) => {
   );
 });
 
+// /booking/cancel/flight
+router.post("/cancel/flight", async (req, res) => {
+  const {
+    token,
+    flight_id,
+    passenger_id,
+    seat_number,
+    ticket_price,
+    is_working_flight,
+  } = req.body;
+
+  // Check if all required fields are provided
+  if (
+    !token ||
+    !flight_id ||
+    !passenger_id ||
+    !seat_number ||
+    !ticket_price ||
+    is_working_flight === null
+  ) {
+    return res.status(400).send("All fields are required.");
+  }
+
+  // Verify the token
+  jwt.verify(token, JWT_SECRET, async (err, decoded) => {
+    if (err) {
+      console.error(err.message);
+      return res.status(401).send("Invalid token.");
+    }
+  });
+
+  db.query(
+    `DELETE FROM ticket WHERE flight_id = ? AND passenger_id = ? AND seat_number = ? AND ticket_price = ? AND is_working_flight = ?`,
+    [flight_id, passenger_id, seat_number, ticket_price, is_working_flight],
+    (err) => {
+      if (err) {
+        console.error(err.message);
+        return res.status(500).send("Error canceling flight.");
+      }
+
+      res.status(200).send("Flight canceled successfully.");
+    }
+  );
+});
+
 module.exports = router;

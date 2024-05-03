@@ -4,64 +4,96 @@ import Navbar from "./Navbar";
 
 function MyFlights() {
   const [flights, setFlights] = useState([]);
-  const [filteredFlights, setFilteredFlights] = useState([]);
-  const [firstName, setFirstName] = useState("");
   const [myTickets, setMyTickets] = useState([]);
   const token = localStorage.getItem("token");
-  const userType = localStorage.getItem("userType");
   const uid = localStorage.getItem("uid");
-  const [initialRender, setInitialRender] = useState(false);
+  const [firstName, setFirstName] = useState("");
+
+  const [ticketInfo, setTicketInfo] = useState(null);
 
   useEffect(() => {
-    const fetchFlights = async () => {
+    const fetchFlightsAndTickets = async () => {
       try {
-        const { data } = await axios.get(
+        const flightsResponse = await axios.get(
           "http://localhost:3001/api/helper/flights"
         );
-        data.forEach((flight) => {
-          flight.price = (Math.random() * 1000).toFixed(2);
+        const flightsData = flightsResponse.data;
+        setFlights(flightsData);
+
+        const ticketsResponse = await axios.get(
+          `http://localhost:3001/api/helper/tickets/${uid}`
+        );
+        const ticketsData = ticketsResponse.data;
+        ticketsData.forEach((ticket) => {
+          const flight = flightsData.find(
+            (f) => f.flight_id === ticket.flight_id
+          );
+          if (flight) {
+            ticket.outbound_airport = flight.outbound_airport;
+            ticket.inbound_airport = flight.inbound_airport;
+            ticket.outbound_city = flight.outbound_city;
+            ticket.inbound_city = flight.inbound_city;
+            ticket.airline_name = flight.airline_name;
+            ticket.is_delayed = flight.is_delayed;
+          }
         });
-        setFlights(data);
-        setFilteredFlights(data);
+        setMyTickets(ticketsData);
       } catch (error) {
-        console.error(`Error fetching flights: ${error}`);
+        console.error(`Error fetching data: ${error}`);
       }
     };
 
     const fetchName = async () => {
       try {
-        const { data } = await axios.post(
+        const response = await axios.post(
           "http://localhost:3001/api/user/name",
           {
             token,
-            userType,
             uid,
           }
         );
-        setFirstName(data.first_name);
+        setFirstName(response.data.first_name);
       } catch (error) {
-        console.error(`Error fetching user data: ${error}`);
+        console.error(`Error fetching user name: ${error}`);
       }
     };
 
-    const fetchMyTickts = async () => {
-      try {
-        const { data } = await axios.get(
-          `http://localhost:3001/api/helper/tickets/${uid}`
-        );
-        setMyTickets(data);
-      } catch (error) {
-        console.error(`Error fetching tickets: ${error}`);
-      }
-    };
+    fetchFlightsAndTickets();
+    fetchName();
+  }, [token, uid]);
 
-    if (!initialRender) {
-      fetchFlights();
-      fetchName();
-      fetchMyTickts();
-      setInitialRender(true);
+  const handleButtonClick = (ticket) => {
+    setTicketInfo(ticket);
+  };
+
+  const handleCancelFlight = async (e) => {
+    let flight = ticketInfo;
+    e.preventDefault();
+    // get uid from local storage
+    const uid = localStorage.getItem("uid");
+    const token = localStorage.getItem("token");
+    // post to /api/booking/book with flight_id, passenger_id or employee_id, seat_number (randomly generated), ticket price we have listed for that flight in the html below, is_working_flight BOOLEAN
+
+    try {
+      const response = await axios.post(
+        "http://localhost:3001/api/booking/cancel/flight",
+        {
+          token,
+          flight_id: ticketInfo.flight_id,
+          passenger_id: uid,
+          seat_number: Math.floor(Math.random() * 100),
+          ticket_price: ticketInfo.ticket_price,
+          is_working_flight: false,
+        }
+      );
+
+      //tell them success and give them their seat number and price
+      alert(`Successfully canceled your flight.`);
+    } catch (error) {
+      alert(`${error}}`);
+      console.error(`Error cancelling flight: ${error}`);
     }
-  }, [token, userType, uid, initialRender]);
+  };
 
   return (
     <div className="flex flex-col items-center justify-center bg-gray-100 pt-16">
@@ -72,8 +104,9 @@ function MyFlights() {
           <div className="mt-4">
             {myTickets.length > 0 ? (
               myTickets.map((ticket) => (
+                <form onSubmit={(e)=>handleCancelFlight(e,ticket)}>
                 <div
-                  key={ticket.flight_id}
+                  key={ticket.ticket_id}
                   className="p-4 bg-gray-100 rounded-lg mb-2 text-left"
                 >
                   <div className="text-left">
@@ -87,23 +120,38 @@ function MyFlights() {
                       )}
                     </p>
                     <p>
-                      <strong>Arrival:</strong>{" "}
-                      {new Date(ticket.flight_arrival_time).toLocaleString(
-                        "en-US"
-                      )}
+                      <strong>Status:</strong>{" "}
+                      {ticket.is_delayed ? "Delayed" : "On time"}
+                    </p>
+                    <p>
+                      <strong>Outbound City:</strong> {ticket.outbound_city}
+                    </p>
+                    <p>
+                      <strong>Outbound Airport:</strong>{" "}
+                      {ticket.outbound_airport}
+                    </p>
+                    <p>
+                      <strong>Inbound City:</strong> {ticket.inbound_city}
+                    </p>
+                    <p>
+                      <strong>Inbound Airport:</strong> {ticket.inbound_airport}
+                    </p>
+                    <p>
+                      <strong>Airline:</strong> {ticket.airline_name}
                     </p>
                     <p>
                       <strong>Price:</strong> ${ticket.ticket_price}
                     </p>
-                    <p>
-                      <strong>Seat Number:</strong> {ticket.seat_number}
-                    </p>
-                    <p>
-                      <strong>Flight Status:</strong>{" "}
-                      {ticket.is_working_flight ? "Working" : "Not Working"}
-                    </p>
                   </div>
+                  <button
+                    className="mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                    type="submit"
+                    onClick={() => handleButtonClick(ticket)}
+                  >
+                    Cancel Flight
+                  </button>
                 </div>
+                </form>
               ))
             ) : (
               <p>No flights available.</p>
