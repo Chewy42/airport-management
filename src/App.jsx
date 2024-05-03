@@ -14,6 +14,7 @@ import SignIn from "./Components/SignIn";
 import SignUp from "./Components/SignUp";
 import Dashboard from "./Components/Dashboard";
 import Booking from "./Components/Booking";
+import MyFlights from "./Components/MyFlights";
 
 function App() {
   // FOR AUTHENTICATION AND PUBLIC/PRIVATE ROUTES
@@ -36,6 +37,7 @@ function App() {
           <Route path="/signup" element={<PublicRoute element={<SignUp />} />} />
           <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
           <Route path="/dashboard/booking" element={<PrivateRoute element={<Booking />} />} />
+          <Route path="/dashboard/my-flights" element={<PrivateRoute element={<MyFlights />} />} />
         </Routes>
       </Router>
     </>

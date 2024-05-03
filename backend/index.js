@@ -32,6 +32,8 @@ const helperRoutes = require("./routes/helperRoutes");
 app.use("/api/helper", helperRoutes);
 const bookingRoutes = require("./routes/bookingRoutes");
 app.use("/api/booking", bookingRoutes);
+const userRoutes = require("./routes/userRoutes");
+app.use("/api/user", userRoutes);
 
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "http://localhost:3000");

@@ -113,62 +113,11 @@ router.post("/signup/employee", async (req, res) => {
       expiresIn: "100h",
     });
 
-    res.status(200).send({ token });
+    res.status(200).send({ token, uid: employeeId});
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Error during signup.");
   }
-});
-
-// sign in
-router.post("/signin", async (req, res) => {
-  const { email, password, userType } = req.body;
-
-  if (!email || !password || !userType) {
-    return res.status(400).send("Email, password, and user type are required.");
-  }
-
-  const table = userType === "employee" ? "employee" : "passenger";
-
-  // Check if the email exists in the correct table
-  db.query(
-    `SELECT * FROM ${table} WHERE email = ?`,
-    [email],
-    async (err, rows) => {
-      if (err) {
-        console.error(err.message);
-        return res.status(500).send("Error querying the database.");
-      }
-
-      if (rows.length === 0) {
-        return res.status(400).send("Email not found.");
-      }
-
-      const user = rows[0];
-
-      try {
-        const match = await bcrypt.compare(password, user.password);
-
-        if (!match) {
-          return res.status(401).send("Authentication failed.");
-        }
-
-        // If the passwords match, create a JWT
-        const token = jwt.sign(
-          { id: user.employee_id || user.passenger_id },
-          JWT_SECRET,
-          {
-            expiresIn: "100h",
-          }
-        );
-
-        res.json({ token });
-      } catch (err) {
-        console.error(err.message);
-        return res.status(500).send("Error during authentication.");
-      }
-    }
-  );
 });
 
 // Signup route for passenger
@@ -206,10 +155,8 @@ router.post("/signup/passenger", async (req, res) => {
       return res.status(400).send("Email already exists.");
     }
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 8);
 
-    // Insert the passenger into the database
     await new Promise((resolve, reject) => {
       db.query(
         `INSERT INTO passenger (first_name, last_name, email, password, age, sex, phone_number) VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -225,7 +172,19 @@ router.post("/signup/passenger", async (req, res) => {
       expiresIn: "100h",
     });
 
-    res.status(200).send({ token:token, user:req.body });
+    const uid = await new Promise((resolve, reject) => {
+      db.query(
+        `SELECT passenger_id FROM passenger WHERE email = ?`,
+        [email],
+        (err, rows) => {
+          if (err) reject(err);
+          resolve(rows[0].passenger_id);
+        }
+      );
+    }
+    );
+
+    res.status(200).send({ token, uid});
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Error during signup.");
@@ -274,7 +233,7 @@ router.post("/signin", async (req, res) => {
           }
         );
 
-        res.json({ token });
+        res.status(200).send({ token, userType, uid: user.employee_id || user.passenger_id });
       } catch (err) {
         console.error(err.message);
         return res.status(500).send("Error during authentication.");

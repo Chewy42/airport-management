@@ -1,261 +1,228 @@
-import {
-  AiOutlineCreditCard,
-  AiOutlineLineChart,
-  AiOutlineLock,
-  AiOutlineMail,
-  AiOutlinePhone,
-  AiOutlineUser,
-} from "react-icons/ai";
-import React, { useState, useEffect, useContext } from "react";
-import { Link } from "react-router-dom";
-import Navbar from "./Navbar";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
-import { BsGenderAmbiguous } from "react-icons/bs";
+import Navbar from "./Navbar";
 import { SlPlane } from "react-icons/sl";
-import { FaBaby } from "react-icons/fa";
-import { isElement } from "react-dom/test-utils";
-import { AuthContext } from "../Contexts/AuthContext";
+import { FaK } from "react-icons/fa6";
 
 const Booking = () => {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [age, setAge] = useState("");
-  const [sex, setSex] = useState("M"); // M or F
-  const [jobTitle, setJobTitle] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [ssn, setSsn] = useState("");
-  const [salary, setSalary] = useState("0");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isEmployee, setIsEmployee] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const { setIsAuthenticated } = useContext(AuthContext);
-
-  const [airlines, setAirlines] = useState([]);
-  const [selectedAirline, setSelectedAirline] = useState("");
-  const [airports, setAirports] = useState([]);
-  const [outboundAirport, setOutboundAirport] = useState({});
-  const [inboundAirport, setInboundAirport] = useState({});
-  const [filteredAirports, setFilteredAirports] = useState([]);
   const [cities, setCities] = useState([]);
-  const [rendered, setRendered] = useState(false);
+  const [flights, setFlights] = useState([]);
+  const [filteredFlights, setFilteredFlights] = useState([]);
+  const [outboundCity, setOutboundCity] = useState("");
+  const [inboundCity, setInboundCity] = useState("");
+  const [flightInfo, setFlightInfo] = useState({});
 
   useEffect(() => {
-    if (rendered) return;
-    const fetchAirlines = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:3001/api/helper/airlines"
-        );
-
-        setAirlines(response.data);
-      } catch (error) {
-        console.error(`Error: ${error}`);
-      }
-    };
-
-    const fetchAirports = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:3001/api/helper/airports"
-        );
-
-        setAirports(response.data);
-      } catch (error) {
-        console.error(`Error: ${error}`);
-      }
-    };
-
     const fetchCities = async () => {
       try {
-        const response = await axios.get(
+        const { data } = await axios.get(
           "http://localhost:3001/api/helper/cities"
         );
-        console.log(response.data);
-        setCities(response.data);
+        setCities(data);
       } catch (error) {
-        console.error(`Error: ${error}`);
+        console.error(`Error fetching cities: ${error}`);
       }
     };
 
-    const fetchData = () => {
-      fetchAirlines();
-      fetchAirports();
-      fetchCities();
+    //ex:
+    //   {
+    //     "flight_id": 2,
+    //     "outbound_airport": "Dominguez-Turner Airport",
+    //     "outbound_city": "Curtisburgh",
+    //     "outbound_city_id": 29,
+    //     "inbound_airport": "Lambert LLC Airport",
+    //     "inbound_city": "Heatherview",
+    //     "inbound_city_id": 1,
+    //     "flight_departure_time": "2025-01-30T01:12:55.000Z",
+    //     "airline_name": "Smith, Evans and Ryan",
+    //     "is_delayed": 1
+    // }
+    const fetchFlights = async () => {
+      try {
+        const { data } = await axios.get(
+          "http://localhost:3001/api/helper/flights"
+        );
+        // add a random price to each flight
+        data.forEach((flight) => {
+          flight.price = (Math.random() * 1000).toFixed(2);
+        });
+        setFlights(data);
+        setFilteredFlights(data); // Initialize with all flights
+      } catch (error) {
+        console.error(`Error fetching flights: ${error}`);
+      }
     };
 
-    if (!rendered) {
-      fetchData();
-      setRendered(true);
-    }
-  }, [rendered]);
+    fetchCities();
+    fetchFlights();
+  }, []);
 
-  const handleClick = async (e) => {
+  useEffect(() => {
+    setFilteredFlights(
+      flights.filter(
+        (flight) =>
+          (!outboundCity ||
+            flight.outbound_city_id.toString() === outboundCity) &&
+          (!inboundCity || flight.inbound_city_id.toString() === inboundCity)
+      )
+    );
+  }, [outboundCity, inboundCity, flights]);
+
+  const cityOptions = useMemo(
+    () =>
+      cities.map((city) => (
+        <option key={city.city_id} value={city.city_id}>
+          {city.city_name} (
+          {
+            flights.filter((flight) => flight.outbound_city_id === city.city_id)
+              .length
+          }
+          )
+        </option>
+      )),
+    [cities, flights]
+  );
+
+  const handleButtonClick = (flight) => {
+    setFlightInfo(flight);
+  };
+
+  const handleBookFlight = async (e) => {
+    let flight = flightInfo;
     e.preventDefault();
-    let outbound_airport_id = outboundAirport.airport_id;
-    let inbound_airport_id = inboundAirport.airport_id;
-
-    if (selectedAirline === "Select") {
-      alert("Please select an airline.");
-      return;
-    } else if (outbound_airport_id === undefined) {
-      alert("Please select an outbound airport.");
-      return;
-    } else if (inbound_airport_id === undefined) {
-      alert("Please select an inbound airport.");
-      return;
-    }
+    // get uid from local storage
+    const uid = localStorage.getItem("uid");
+    const token = localStorage.getItem("token");
+    // post to /api/booking/book with flight_id, passenger_id or employee_id, seat_number (randomly generated), ticket price we have listed for that flight in the html below, is_working_flight BOOLEAN
 
     try {
-      const response = await axios.post(
-        "http://localhost:3001/api/booking/book",
+      let seat_number = Math.floor(Math.random() * 100);
+      const { data } = await axios.post(
+        "http://localhost:3001/api/booking/book/flight",
         {
-          airline_name: selectedAirline,
-          outbound_airport_id: outbound_airport_id,
-          inbound_airport_id: inbound_airport_id,
-          is_employee: isEmployee,
+          token,
+          flight_id: flight.flight_id,
+          passenger_id: uid,
+          seat_number: seat_number,
+          ticket_price: flight.price,
+          is_working_flight: false,
         }
       );
-
-      console.log(response.data);
-
-      if (response.data.length === 0) {
-        alert("No flights found.");
-        return;
-      }
-
-      alert("Flight booked successfully.");
+      //tell them success and give them their seat number and price
+      alert(
+        `Flight booked successfully! Your seat number is ${seat_number} and the ticket price is $${flight.price}`
+      );
     } catch (error) {
-      console.error(`Error: ${error}`);
+      alert(`${error}}`);
+      console.error(`Error booking flight: ${error}`);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen w-screen flex flex-col items-center">
       <Navbar signup={true} />
-      <main className="flex-grow bg-[#f0f4f9] relative flex flex-col justify-center align-top">
-        <div className="mx-auto mt-[150px] mb-auto py-[36px] w-full sm:w-[70%] bg-white rounded-[28px] border-2">
-          {/* Error Message Display */}
-          {/* {errorMessage && (
-              <div className="px-4 py-2 bg-red-500 text-white text-sm rounded-md absolute top-20 left-1/2 transform -translate-x-1/2">
-                {errorMessage}
-              </div>
-            )} */}
-          <h2 className="text-3xl font-bold text-center text-primary mb-6 select-none">
+      <main className="min-w-full max-w-full w-full min-h-screen bg-[#f0f4f9] flex flex-col items-center justify-center align-middle">
+        <div className="w-3/5 bg-white rounded-xl border shadow-lg p-6 mt-24 mx-auto mb-auto">
+          <h2 className="text-3xl text-center text-primary mb-6">
             Book a Flight
           </h2>
-
-          <form onSubmit={handleClick}>
-            {/* <div className="my-4 relative w-[50%] mx-auto">
+          <form className="space-y-6" onSubmit={(e) => handleBookFlight(e)}>
+            <div className="relative">
               <label
-                htmlFor="name"
-                className="block text-primary font-semibold mb-2 select-none"
+                htmlFor="outboundCitySelect"
+                className="block text-primary mb-2"
               >
-                Which Airline are you flying with?:
+                Outbound City:
               </label>
-
               <select
-                className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black"
-                onChange={(e) => {
-                  setSelectedAirline(e.target.value);
-                }}
+                id="outboundCitySelect"
+                value={outboundCity}
+                onChange={(e) => setOutboundCity(e.target.value)}
+                className="w-full pl-12 pr-5 py-3 border rounded focus:outline-none"
               >
-                <option value="Select">Select</option>
-                {airlines.map((airline) => (
-                  <option
-                    key={airline.airline_name}
-                    value={airline.airline_name}
-                  >
-                    {airline.airline_name}
-                  </option>
-                ))}
+                <option value="">Select Outbound City</option>
+                {cityOptions}
               </select>
-
-              <SlPlane className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
-            </div> */}
-
-            <div className="my-4 relative w-[50%] mx-auto">
+              <SlPlane className="absolute top-12 left-3 transform text-lg" />
+            </div>
+            <div className="relative">
               <label
-                htmlFor="name"
-                className="block text-primary font-semibold mb-2 select-none"
+                htmlFor="inboundCitySelect"
+                className="block text-primary mb-2"
               >
-                What City Are You Flying From?:
+                Inbound City:
               </label>
-
-              <select className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black">
-                <option value="Select">Select</option>
-                {cities.map((city) => (
-                  <option
-                    key={
-                      city.city_name +
-                      "-outbound-" +
-                      (Math.floor(Math.random() * 900) + 100).toString()
-                    }
-                    value={city.city_name}
-                  >
-                    {city.city_name}
-                  </option>
-                ))}
+              <select
+                id="inboundCitySelect"
+                value={inboundCity}
+                onChange={(e) => setInboundCity(e.target.value)}
+                className="w-full pl-12 pr-5 py-3 border rounded focus:outline-none"
+              >
+                <option value="">Select Inbound City</option>
+                {cityOptions}
               </select>
-
-              <SlPlane className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
+              <SlPlane className="absolute top-12 left-3 transform text-lg" />
             </div>
-
-            <div className="my-4 relative w-[50%] mx-auto">
-              <label
-                htmlFor="name"
-                className="block text-primary font-semibold mb-2 select-none"
-              >
-                What City Are You Flying To?:
-              </label>
-
-              <select className="w-full pl-9 pr-5 py-2 border-2  rounded focus:outline-none focus:border-black">
-                <option value="Select">Select</option>
-                {cities.map((city) => (
-                  <option
-                    key={
-                      city.city_name +
-                      "-inbound-" +
-                      (Math.floor(Math.random() * 900) + 100).toString()
-                    }
-                    value={city.city_name}
+            <div className="text-center">
+              <h3 className="text-xl font-bold mb-4">Available Flights:</h3>
+              {filteredFlights.length > 0 ? (
+                filteredFlights.map((flight) => (
+                  <div
+                    key={flight.flight_id}
+                    className="p-4 bg-gray-100 rounded-lg mb-2 text-left"
                   >
-                    {city.city_name}
-                  </option>
-                ))}
-              </select>
+                    <div className="text-left">
+                      <p>
+                        <strong>Flight ID:</strong> {flight.flight_id}
+                      </p>
+                      <p>
+                        <strong>Departure:</strong>{" "}
+                        {new Date(flight.flight_departure_time).toLocaleString(
+                          "en-US"
+                        )}
+                      </p>
+                      <p>
+                        <strong>Status:</strong>{" "}
+                        {flight.is_delayed ? "Delayed" : "On time"}
+                      </p>
+                    </div>
+                    <div className="text-left">
+                      <p>
+                        <strong>Outbound City:</strong> {flight.outbound_city}
+                      </p>
+                      <p>
+                        <strong>Outbound Airport:</strong>{" "}
+                        {flight.outbound_airport}
+                      </p>
+                      <p>
+                        <strong>Inbound City:</strong> {flight.inbound_city}
+                      </p>
+                      <p>
+                        <strong>Inbound Airport:</strong>{" "}
+                        {flight.inbound_airport}
+                      </p>
+                      <p>
+                        <strong>Airline:</strong> {flight.airline_name}
+                      </p>
+                      <p>
+                        <strong>Price:</strong> {flight.price}
+                      </p>
+                    </div>
 
-              <SlPlane className="absolute top-[44px] left-[10px] w-[20px] h-auto" />
-            </div>
-
-            <div className="my-4 relative w-[50%] mx-auto flex justify-start align-middle">
-              <label
-                htmlFor="password"
-                className="text-primary font-medium select-none"
-              >
-                Are you an employee?:
-              </label>
-
-              <input
-                type="checkbox"
-                onChange={(e) => {
-                  setIsEmployee(!isEmployee);
-                }}
-                defaultChecked={false}
-                className="ml-2 border-2 focus:outline-none focus:border-black"
-              />
-              <p className="font-medium ml-1">
-                {isEmployee ? "Yes, I am an Employee." : "No"}
-              </p>
-            </div>
-
-            <div className="flex flex-col justfiy-center align-middle w-[50%] mx-auto">
-              <button
-                type="submit"
-                className="select-none bg-green-500 hover:scale-[103%] transition-all ease-linear duration-200 text-white font-medium px-6 py-3 mt-4 rounded-md shadow-md w-[100%] mx-auto hover:shadow-xl"
-              >
-                Book Flight
-              </button>
+                    <button
+                      className="mt-4 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                      type="submit"
+                      onClick={() => handleButtonClick(flight)}
+                    >
+                      Book Flight
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <p className="text-left">
+                  No flights available for the selected cities.
+                </p>
+              )}
             </div>
           </form>
         </div>

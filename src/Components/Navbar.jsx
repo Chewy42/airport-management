@@ -10,6 +10,8 @@ function Navbar() {
 
   const handleSignOut = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userType");
+    localStorage.removeItem("uid");
     window.location.href = "/";
   };
 
@@ -28,6 +30,14 @@ function Navbar() {
       <div className="flex items-center justify-end flex-1 space-x-4">
         {isAuthenticated ? (
           <div>
+            {location.pathname !== "/dashboard/my-flights" && (
+              <Link
+                to="/dashboard/my-flights"
+                className="mr-4 px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded hover:bg-blue-600 transition-all ease-linear duration-150"
+              >
+                My Flights
+              </Link>
+            )}
             {location.pathname !== "/dashboard/booking" && (
               <Link
                 to="/dashboard/booking"

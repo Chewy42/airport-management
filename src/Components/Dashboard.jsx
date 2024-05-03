@@ -1,92 +1,97 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import Navbar from "./Navbar";
-import Landing from "./Landing";
 
 function Dashboard() {
   const [flights, setFlights] = useState([]);
-  const [yourFlights, setYourFlights] = useState([]);
+  const [firstName, setFirstName] = useState("");
+
+  // Getting authentication details from local storage
+  const token = localStorage.getItem("token");
+  const userType = localStorage.getItem("userType");
+  const uid = localStorage.getItem("uid");
 
   useEffect(() => {
-    fetch("http://localhost:3001/api/helper/flights")
-      .then((res) => res.json())
-      .then((data) => {
-        setFlights(data);
-        console.log(data);
+    // Fetch flight details from the API
+    axios
+      .get("http://localhost:3001/api/helper/flights")
+      .then((response) => {
+        setFlights(response.data);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch flights:", error);
       });
-  }, []);
 
-//   useEffect(() => {
-//   // use email in localstorage to get users id
-//   // use users id to get their flights
-//   let temp_email = localStorage.getItem("email");
-//   let temp_id;
-
-//   // Assuming you have an API endpoint to get user by email
-//   fetch(`http://localhost:3001/api/helper/user?email=${temp_email}`)
-//     .then((res) => res.json())
-//     .then((data) => {
-//       temp_id = data.id;
-
-//       // Assuming you have an API endpoint to get flights by user id
-//       fetch(`http://localhost:3001/api/helper/flights?userId=${temp_id}`)
-//         .then((res) => res.json())
-//         .then((data) => {
-//           setYourFlights(data);
-//         });
-//     });
-// }, [flights]);
+    // Fetch the first name of the user
+    axios
+      .post("http://localhost:3001/api/user/name", { token, userType, uid })
+      .then((response) => {
+        setFirstName(response.data.first_name);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch user data:", error);
+      });
+  }, [token, userType, uid]); // Dependencies for useEffect to control when it re-runs
 
   return (
-    <div className="flex flex-col items-center justify-center bg-gray-100">
+    <div className="flex flex-col items-center justify-center bg-gray-100 pt-16">
       <Navbar />
-      <div className="w-3/4 bg-white shadow-md rounded-lg p-6 mt-[100px]">
-        <h1 className="text-2xl font-bold mb-4">Your Flights</h1>
-        <div id="yourFlights" className="">
-          {yourFlights.map((flight) => (
-            <div
-              key={flight.flight_id}
-              className="flex flex-row justify-between items-center p-4 bg-gray-200 rounded-lg mb-2"
-            >
-              <div>
-                <p className="font-bold">Flight ID: {flight.flight_id}</p>
-                <p>Departure Time: {flight.flight_departure_time}</p>
-                <p>Delayed: {flight.is_delayed ? "Yes" : "No"}</p>
-              </div>
-              <div>
-                <p>Airline ID: {flight.airline_id}</p>
-                <p>Outbound Airport ID: {flight.outbound_airport_id}</p>
-                <p>Inbound Airport ID: {flight.inbound_airport_id}</p>
-              </div>
-            </div>
-          ))}
-      </div>
-      </div>
-      <div className="w-3/4 bg-white shadow-md rounded-lg p-6 mt-[100px]">
-        <h1 className="text-2xl font-bold mb-4">Flights</h1>
-        <div id="flights" className="">
-          {flights.map((flight) => (
-            <div
-              key={flight.flight_id}
-              className="flex flex-row justify-between items-center p-4 bg-gray-200 rounded-lg mb-2"
-            >
-              <div>
-                <p className="font-bold">Flight ID: {flight.flight_id}</p>
-                <p>Departure Time: {flight.flight_departure_time}</p>
-                <p>Delayed: {flight.is_delayed ? "Yes" : "No"}</p>
-              </div>
-              <div>
-                <p>Airline ID: {flight.airline_id}</p>
-                <p>Outbound Airport ID: {flight.outbound_airport_id}</p>
-                <p>Inbound Airport ID: {flight.inbound_airport_id}</p>
-              </div>
-            </div>
-          ))}
+      <main className="min-w-full max-w-full w-full min-h-screen bg-[#f0f4f9] flex flex-col items-center justify-center align-middle">
+        <div className="w-3/5 bg-white rounded-xl border shadow-lg p-6 mt-4 mx-auto mb-auto">
+          <h1 className="text-2xl font-bold mb-4">
+            Welcome, {firstName || "Guest"}!
+          </h1>
+          <div className="mt-4">
+            <h2 className="text-xl font-bold mb-4">Available Flights:</h2>
+            {flights.length > 0 ? (
+              flights.map((flight) => (
+                <div
+                  key={flight.flight_id}
+                  className="p-4 bg-gray-100 rounded-lg mb-2 text-left"
+                >
+                  <div className="text-left">
+                    <p>
+                      <strong>Flight ID:</strong> {flight.flight_id}
+                    </p>
+                    <p>
+                      <strong>Departure:</strong>{" "}
+                      {new Date(flight.flight_departure_time).toLocaleString(
+                        "en-US"
+                      )}
+                    </p>
+                    <p>
+                      <strong>Status:</strong>{" "}
+                      {flight.is_delayed ? "Delayed" : "On time"}
+                    </p>
+                  </div>
+                  <div className="text-left">
+                    <p>
+                      <strong>Outbound City:</strong> {flight.outbound_city}
+                    </p>
+                    <p>
+                      <strong>Outbound Airport:</strong>{" "}
+                      {flight.outbound_airport}
+                    </p>
+                    <p>
+                      <strong>Inbound City:</strong> {flight.inbound_city}
+                    </p>
+                    <p>
+                      <strong>Inbound Airport:</strong> {flight.inbound_airport}
+                    </p>
+                    <p>
+                      <strong>Airline:</strong> {flight.airline_name}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p>No flights available.</p>
+            )}
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
-
-
 
 export default Dashboard;

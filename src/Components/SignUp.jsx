@@ -65,18 +65,6 @@ const SignUp = () => {
       }
     };
 
-    const filterAirportsByAirline = async () => {
-      try {
-        const response = await axios.get(
-          `http://localhost:3001/api/helper/airports?airline=${selectedAirline}`
-        );
-        console.log(response.data);
-        setFilteredAirports(response.data);
-      } catch (error) {
-        console.error(`Error: ${error}`);
-      }
-    };
-
     const fetchData = () => {
       fetchAirlines();
       fetchAirports();
@@ -86,7 +74,7 @@ const SignUp = () => {
       fetchData();
       setRendered(true);
     }
-  }, [rendered]);
+  }, [rendered, selectedAirline]);
 
   useEffect(() => {
     const filterAirports = async () => {
@@ -141,8 +129,8 @@ const SignUp = () => {
         );
         if (result.status === 200) {
           localStorage.setItem("token", result.data.token);
-          localStorage.setItem("userType", "employee");
-          localStorage.setItem("email", email);
+          localStorage.setItem("userType", result.data.userType);
+          localStorage.setItem("uid", result.data.uid);
           setIsAuthenticated(true);
         }
       } catch (error) {
@@ -167,8 +155,8 @@ const SignUp = () => {
 
         if (result.status === 200) {
           localStorage.setItem("token", result.data.token);
-          localStorage.setItem("userType", "passenger");
-          localStorage.setItem("email", email);
+          localStorage.setItem("userType", result.data.userType);
+          localStorage.setItem("uid", result.data.uid);
           setIsAuthenticated(true);
         }
       } catch (error) {

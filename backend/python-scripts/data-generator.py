@@ -112,10 +112,10 @@ def main():
         conn = connect_db()
         cursor = conn.cursor()
 
-        city_ids = [insert_city(cursor) for _ in range(100)]
-        airport_ids = [insert_airport(cursor, random.choice(city_ids)) for _ in range(100)]
-        airline_ids = [insert_airline(cursor) for _ in range(100)]
-        flight_ids = [insert_flight(cursor, random.choice(airline_ids), random.choice(airport_ids), random.choice(airport_ids)) for _ in range(100)]
+        city_ids = [insert_city(cursor) for _ in range(30)]
+        airport_ids = [insert_airport(cursor, random.choice(city_ids)) for _ in range(50)]
+        airline_ids = [insert_airline(cursor) for _ in range(50)]
+        flight_ids = [insert_flight(cursor, random.choice(airline_ids), random.choice(airport_ids), random.choice(airport_ids)) for _ in range(2000)]
         employee_ids = [insert_employee(cursor, random.choice(airline_ids), random.choice(airport_ids)) for _ in range(100)]
         passenger_ids = [insert_passenger(cursor) for _ in range(100)]
         [insert_ticket(cursor, random.choice(flight_ids), random.choice(passenger_ids), random.choice(employee_ids)) for _ in range(100)]

@@ -23,11 +23,13 @@ const SignIn = () => {
       result = await axios.post("http://localhost:3001/api/auth/signin", {
         email: email,
         password: password,
-        userType: isEmployee ? "employee" : "customer",
+        userType: isEmployee ? "employee" : "passenger",
       });
 
       if (result.status === 200) {
         localStorage.setItem("token", result.data.token);
+        localStorage.setItem("userType", result.data.userType);
+        localStorage.setItem("uid", result.data.uid);
         setIsAuthenticated(true);
       }
     } catch (error) {
